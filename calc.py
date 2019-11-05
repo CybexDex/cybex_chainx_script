@@ -157,18 +157,21 @@ def test_rates(free_delta = 10 ** 8):
 	print '==============================dividend===================================='
 	print dividend
 if __name__ == '__main__':
+	import sys
 	# 1. load image of base balance for the node from mongodb
 	try:
 		base_free = list(db['balance'].find().sort([('timestamp',-1)]).limit(1))[0]['pcx']['details']['Free']
 	except:
-		base_free = config.BASE # load from mongo
+		image_balance = get_balance_pcx()
+		insert2mongo({'pcx':image_balance, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')) , 'time':str(datetime.datetime.utcnow())}, 'balance')
+		logger.info('init balance, will not dividend.')
+		sys.exit(0)
 	logger.info('base pcx free balance is ' + str(base_free))
 	# 2. fetch current balance for the node from chain
 	free = free_balance_pcx()
 	free_delta = free - base_free
 	if free_delta <= 0:
 		logger.warning('balance is not enough!')
-		import sys
 		sys.exit(0)
 	# 3. calc voters' dividend after getting free_delta
 	# first solution
