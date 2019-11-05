@@ -185,9 +185,9 @@ if __name__ == '__main__':
 		to = k
 		_from = config.Pubkey
 		amount = v['dividend']
-		if amount < config.Fee * 2:
+		if amount < config.Fee :
 			continue
-		amount = int(amount - config.Fee)
+		# amount = int(amount - config.Fee)
 		logger.info('do_transfer(%s, %s, %s)' % (_from, to, str(amount)))
 		print 'do_transfer(%s, %s, %s)' % (_from, to, str(amount))
 		do_transfer(_from, to, amount)
