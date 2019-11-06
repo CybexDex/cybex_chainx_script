@@ -197,17 +197,19 @@ if __name__ == '__main__':
 		insert2mongo({'to_addr':to,'amount': amount,'from_addr': _from, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')), 'time': str(datetime.datetime.utcnow())}, 'dividend_transfer')
 	# 5. claim insterest for node
 	time.sleep(2)
-	logger.info('current StakingDividend before claim -> ' + str(chainx_getStakingDividendByAccount(config.Pubkey)))
-	print 'current StakingDividend before claim -> ' + str(chainx_getStakingDividendByAccount(config.Pubkey))
+	staking_dividends = chainx_getStakingDividendByAccount(config.Pubkey)
+	node_staking_dividends = staking_dividends.get(config.Pubkey)
+	insert2mongo( {'staking_dividends':staking_dividends, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')), 'time': str(datetime.datetime.utcnow()) }, 'staking_dividends')
+	logger.info('current StakingDividend before claim -> ' + json.dumps(staking_dividends) )
 	logger.info('do_claim(%s)' % (config.Pubkey))
-	print 'do_claim(%s)' % (config.Pubkey)
 	do_claim(config.Pubkey)
 	# 6. stake self
 	time.sleep(2)
 	free = free_balance_pcx()
 	stake_amount = free - config.Fee
-	logger.info('added staking amount is %s ' % str(stake_amount) )
-	do_staking(config.Pubkey, config.Pubkey, stake_amount)
+	logger.info('transfer to %s with amount %s ' % (config.Transfer_to, str(stake_amount) ))
+	# do_staking(config.Pubkey, config.Pubkey, stake_amount)
+	do_transfer(config.Pubkey, config.Transfer_to, stake_amount)
 	time.sleep(5)
 	# 7. fetch balance image for node and store
 	image_balance = get_balance_pcx()
