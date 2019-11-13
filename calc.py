@@ -182,9 +182,11 @@ if __name__ == '__main__':
 	insert2mongo({'rates':rates,'total_nomination': total,'free_delta': free_delta, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')), 'time': str(datetime.datetime.utcnow())}, 'rates')
 	# rates = db['rates'].find().sort(['timestamp':-1]).limit(1)
 	dividend = calc_dividend_by_rates(rates, free_delta )
+	estimate_amount = 0
 	# 4. transfer dividend to other voters
 	for k,v in dividend.items():
 		if k == config.Pubkey:
+			estimate_amount += v['dividend']
 			continue
 		to = k
 		_from = config.Pubkey
@@ -195,26 +197,38 @@ if __name__ == '__main__':
 		memo = '"CybexDex dividends"'
 		logger.info('do_transfer(%s, %s, %s, %s)' % (_from, to, str(amount), memo))
 		print 'do_transfer(%s, %s, %s, %s)' % (_from, to, str(amount), memo)
-		do_transfer(_from, to, amount, memo)
+		is_succeed = do_transfer(_from, to, amount, memo)
+		if is_succeed is False:
+			logger.error('failed when transfer %s to %s, will exit with code -1 ' % (str(amount), to))
+			sys.exit(-1)
+		time.sleep(30)
 		insert2mongo({'to_addr':to,'amount': amount,'from_addr': _from, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')), 'time': str(datetime.datetime.utcnow())}, 'dividend_transfer')
 	# 5. claim insterest for node
-	time.sleep(2)
+	time.sleep(10)
 	staking_dividends = chainx_getStakingDividendByAccount(config.Pubkey)
 	node_staking_dividends = staking_dividends.get(config.Pubkey)
 	insert2mongo( {'staking_dividends':staking_dividends, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')), 'time': str(datetime.datetime.utcnow()) }, 'staking_dividends')
 	logger.info('current StakingDividend before claim -> ' + json.dumps(staking_dividends) )
 	logger.info('do_claim(%s)' % (config.Pubkey))
-	do_claim(config.Pubkey)
+	is_succeed = do_claim(config.Pubkey)
+	if is_succeed is False:
+		logger.error('failed when do claim, will exit with code -1')
+		sys.exit(-1)
 	# 6. stake self
-	time.sleep(2)
+	time.sleep(30)
 	free = free_balance_pcx()
 	stake_amount = free - config.Fee
+	estimate_amount += int(staking_dividends.get(config.Pubkey))
+	logger.info('estimated transfer amount to %s is %s ' % (config.Pubkey, str(estimate_amount)))
 	logger.info('transfer to %s with amount %s ' % (config.Transfer_to, str(stake_amount) ))
 	# do_staking(config.Pubkey, config.Pubkey, stake_amount)
 	memo = '"CybexDex revenue"'
-	do_transfer(config.Pubkey, config.Transfer_to, stake_amount, memo)
-	time.sleep(5)
+	is_succeed = do_transfer(config.Pubkey, config.Transfer_to, stake_amount, memo)
+	if is_succeed is False:
+		logger.error('failed when do transfer %s to %s, will exit with code -1' % (str(stake_amount), config.Transfer_to) )
+		sys.exit(-1)
+	time.sleep(30)
 	# 7. fetch balance image for node and store
 	image_balance = get_balance_pcx()
-	insert2mongo({'pcx':image_balance, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')) , 'time':str(datetime.datetime.utcnow())}, 'balance')
+	insert2mongo({'pcx':image_balance, 'last_estimate_amount':estimate_amount, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')) , 'time':str(datetime.datetime.utcnow())}, 'balance')
 

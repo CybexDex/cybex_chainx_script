@@ -15,7 +15,6 @@ console.log(memo);
 
   // 等待异步的初始化
   await chainx.isRpcReady();
-  chainx.on('disconnected', () => {process.exit()}) // websocket 链接断开
 
   // 构造交易参数（同步）
 
@@ -28,13 +27,13 @@ console.log(memo);
   await extrinsic.signAndSend(privkey, (error, response) => {
     if (error) {
       console.log(error);
+      process.exit(-1);
     } else if (response.status === 'Finalized') {
       if (response.result === 'ExtrinsicSuccess') {
         console.log('交易成功');
+        process.exit(0);
       }
     }
   });
-  process.exit();
-  // chainx.provider.websocket.close();
 })();
 
