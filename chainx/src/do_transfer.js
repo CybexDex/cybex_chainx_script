@@ -21,7 +21,7 @@ console.log(privkey);
 
   // 构造交易参数（同步）
 
-  const extrinsic = chainx.asset.transfer(to, 'PCX', amount, '转账 PCX as test');
+  const extrinsic = chainx.asset.transfer(to, 'PCX', amount, '转账 PCX');
 
   // 查看 method 哈希
   console.log('Function: ', extrinsic.method.toHex());

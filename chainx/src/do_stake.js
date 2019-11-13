@@ -17,7 +17,7 @@ const privkey = process.argv[5];
 
   // 构造交易参数（同步）
 
-  const extrinsic = chainx.stake.nominate(vote_to, amount, '');
+  const extrinsic = chainx.stake.nominate(vote_to, amount, 'Stake');
 
   // 查看 method 哈希
   console.log('Function: ', extrinsic.method.toHex());
