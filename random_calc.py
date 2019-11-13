@@ -140,24 +140,26 @@ def free_balance_pcx():
 	free = asset['details']['Free']
 	logger.info('free_balance_pcx is \n' + json.dumps(free))
 	return free
+def get_calc_dividend_rate():
+	try:
+		t_upperbound = int(datetime.datetime.strftime(datetime.datetime.now(),'%s'))
+		t_lowerbound = t_upperbound - 3600 * 24 * 7
+		logger.info('sampling timepoint is between (%s, %s)' % (str(t_lowerbound), str(t_upperbound)))
+		timestamps_count = db.image.find({'timestamp':{'$gte':t_lowerbound}}).count()
+		logger.info('valide image number is ' + str(timestamps_count))
+		seed = random.random()
+		chosen = int(seed * timestamps_count) 
+		logger.info('chosen sequence is ' + str(chosen))
+		item = list(db.image.find({'timestamp': {'$gte':t_lowerbound}}).skip(chosen).limit(1))[0]
+		rates = item['rates']
+		total_votes = item['total_votes']
+		chosen_time = item['time']
+		chosen_timestamp = item['timestamp']
+	except:
+		logger.error('error when fetch rates from db.image')
+		sys.exit(0)
+	return rates, total_votes, chosen_time, chosen_timestamp
 
-def test_balances(): # read only to chain
-	image_balance = get_balance_pcx()
-	insert2mongo({'pcx':image_balance, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')) , 'time':str(datetime.datetime.utcnow())}, 'balance')
-	base_free = list(db['balance'].find().sort([('timestamp',-1)]).limit(1))[0]['pcx']['details']['Free']
-	print base_free
-def test_rates(free_delta = 10 ** 8):
-	rates, total = calc_dividend_rate()
-	insert2mongo({'rates':rates,'total_nomination': total, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')), 'time': str(datetime.datetime.utcnow())}, 'rates')
-	rates_ = list(db['rates'].find().sort([('timestamp',-1)]).limit(1))[0]
-	rates = rates_['rates']
-	total = rates_['total_nomination']
-	print '==============================rates===================================='
-	print rates, total
-	# free_delta = 10 ** 10
-	dividend = calc_dividend_by_rates(rates, free_delta )
-	print '==============================dividend===================================='
-	print dividend
 if __name__ == '__main__':
 	import sys
 	# 1. load image of base balance for the node from mongodb
@@ -179,8 +181,8 @@ if __name__ == '__main__':
 	# first solution
 	# dividend = calc_dividend(free_delta)
 	# second solution: after calc rates and store, later load rates from mongo and then calc with delta
-	rates, total = calc_dividend_rate()
-	insert2mongo({'rates':rates,'total_nomination': total,'free_delta': free_delta, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')), 'time': str(datetime.datetime.utcnow())}, 'rates')
+	rates, total, chosen_time, chosen_timestamp = get_calc_dividend_rate()
+	insert2mongo({'rates':rates,'total_nomination': total,'free_delta': free_delta, 'timestamp':int(datetime.datetime.strftime(datetime.datetime.now(), '%s')), 'time': str(datetime.datetime.utcnow()), 'chosen_time': chosen_time, 'chosen_timestamp':chosen_timestamp}, 'rates')
 	# rates = db['rates'].find().sort(['timestamp':-1]).limit(1)
 	dividend = calc_dividend_by_rates(rates, free_delta )
 	estimate_amount = int(free_delta * 0.2)
