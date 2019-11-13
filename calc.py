@@ -75,6 +75,7 @@ def do_transfer(_from, _to, amount, memo = ''):
 	amount = int(amount)
 	privk = config.PRIVK
 	cmd = 'node chainx/src/do_transfer.js %s %s %s %s %s' % (_from, _to, str(amount), privk, memo)
+	logger.info(cmd)
 	res = os.system(cmd)
 	return res == 0
 def do_staking(_from, vote_to, amount):
@@ -191,7 +192,7 @@ if __name__ == '__main__':
 		if amount < config.Fee :
 			continue
 		# amount = int(amount - config.Fee)
-		memo = 'CybexDex dividends'
+		memo = '"CybexDex dividends"'
 		logger.info('do_transfer(%s, %s, %s, %s)' % (_from, to, str(amount), memo))
 		print 'do_transfer(%s, %s, %s, %s)' % (_from, to, str(amount), memo)
 		do_transfer(_from, to, amount, memo)
@@ -210,7 +211,7 @@ if __name__ == '__main__':
 	stake_amount = free - config.Fee
 	logger.info('transfer to %s with amount %s ' % (config.Transfer_to, str(stake_amount) ))
 	# do_staking(config.Pubkey, config.Pubkey, stake_amount)
-	memo = 'CybexDex revenue'
+	memo = '"CybexDex revenue"'
 	do_transfer(config.Pubkey, config.Transfer_to, stake_amount, memo)
 	time.sleep(5)
 	# 7. fetch balance image for node and store
