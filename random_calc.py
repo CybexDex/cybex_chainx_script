@@ -8,9 +8,9 @@ from logging.handlers import TimedRotatingFileHandler
 from pymongo import MongoClient
 from bson import json_util
 from bson.objectid import ObjectId
-import os, time
+import os, time, random
 
-is_debugging = False
+is_debugging = True
 logging.basicConfig(level=logging.DEBUG,
                 format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                 datefmt='%a, %d %b %Y %H:%M:%S',
